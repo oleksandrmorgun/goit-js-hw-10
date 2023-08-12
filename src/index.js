@@ -1,80 +1,82 @@
-import axios from "axios";
-import { fetchBreeds, fetchCatByBreed } from "./cat-api"
-import SlimSelect from 'slim-select'
-import 'slim-select/dist/slimselect.css'
-import { Notify } from 'notiflix/build/notiflix-notify-aio';
+// Імпорт модулів та бібліотек
+import { fetchBreeds, fetchCatByBreed } from './cat-api';
+import SlimSelect from 'slim-select';
+import 'slim-select/dist/slimselect.css';
+import Notiflix from 'notiflix';
 
+// Оголошення об'єкта, який містить посилання на DOM-елементи
+const elements = {
+  breedSelect: document.querySelector('.breed-select'),
+  catInfo: document.querySelector('.cat-info'),
+  loader: document.querySelector('.loader'),
+  error: document.querySelector('.error'),
+};
 
+// Розгортання об'єкта elements на окремі змінні для зручності використання
+const { breedSelect, catInfo, loader, error } = elements;
 
-axios.defaults.headers.common["x-api-key"] = "live_gLtSFDyH7Qf7Q0u2oSHJOwVqIowxb3AAe0CTsMo1vMk4iOY28E1YnWOx6XUXNYDn";
+// Приховання деяких елементів на початку
+breedSelect.classList.add('is-hidden');
+error.classList.add('is-hidden');
+catInfo.classList.add('is-hidden');
 
-const selectCat = document.querySelector(".breed-select")
-const catInfo = document.querySelector(".cat-info")
-const loader = document.querySelector('.loader')
-const error = document.querySelector('.error')
+// Отримання і відображення списку порід котів
+fetchBreeds()
+  .then(({ data }) => {
+    let breedsArray = [];
+    data.forEach(cat => {
+      breedSelect.classList.remove('is-hidden');
+      loader.classList.add('is-hidden');
+      error.classList.add('is-hidden');
+      breedsArray.push({ value: cat.id, text: cat.name });
+    });
+    new SlimSelect({
+      select: breedSelect,
+      data: breedsArray,
+      settings: {
+        allowDeselect: true,
+      },
+    });
+  })
+  .catch(errorHandler);
 
-selectCat.addEventListener("change", onSelectChange)
+// Додання обробника події "change" до вибору породи кота
+breedSelect.addEventListener('change', catHandler);
 
+// Функція-обробник події "change" для вибору породи кота
+function catHandler(e) {
+  loader.classList.remove('is-hidden');
+  catInfo.classList.add('is-hidden');
 
-function createCatList() {
-    // Показуємо лоадер перед початком запиту
-    loader.classList.remove('is-hidden');
-    selectCat.classList.add('is-hidden');
-    error.classList.add('is-hidden')
+  const breedId = e.currentTarget.value;  // отримання обраного значення породи
 
-    //обробляємо результат запиту на бекенд (всі породи котів)
-    fetchBreeds()
-        .then(data => {
+  // Отримання і відображення інформації про кота обраної породи
+  fetchCatByBreed(breedId)
+    .then(({ data }) => {
+      loader.classList.add('is-hidden');
+      catInfo.classList.remove('is-hidden');
 
-            const optionsList = data.map(({ id, name }) => ` <option value="${id}">${name}</option>`
-            ).join(' ');
-
-            selectCat.innerHTML = optionsList;
-
-            //стилізуємо селект з доп бібліотеки SlimSelect 
-            new SlimSelect({
-                select: selectCat
-            })
-            // Отримали дані успішно, ховаємо лоадер показуємо селект
-            loader.classList.add('is-hidden');
-            selectCat.classList.remove('is-hidden')
-        })
-        .catch(error => {
-            Notify.failure('Oops! Something went wrong! Try reloading the page!')
-        });
+      const { url, breeds } = data[0];  // отримання URL зображення кота та інформації про породу
+      renderCatInfo(url, breeds);  // відображення інформації про кота
+    })
+    .catch(errorHandler);
 }
 
-createCatList();
-
-
-
-function onSelectChange(evt) {
-    loader.classList.remove('is-hidden');
-    catInfo.classList.add('is-hidden');
-
-    const selectedBreedId = evt.currentTarget.value;
-
-    fetchCatByBreed(selectedBreedId)
-        .then(data => {
-            renderMarkupInfo(data);
-            loader.classList.add('is-hidden');
-            catInfo.classList.remove('is-hidden');
-        })
-        .catch(error => {
-            loader.classList.add('is-hidden');
-            Notify.failure('Oops! Something went wrong! Try reloading the page!')
-        });
+// Функція для відображення інформації про кота
+function renderCatInfo(url, breeds) {
+  catInfo.innerHTML = `<img src="${url}" alt="${breeds[0].name}" width="400">
+    <div class="wrapper-text"><h1 class="">${breeds[0].name} (${breeds[0].country_code})</h1>
+    <p class="">${breeds[0].description}</p></div>`;
 }
 
-function renderMarkupInfo(data) {
-    const { breeds, url } = data[0];
-    const { name, temperament, description } = breeds[0];
-    const beerdCard = `<img class="pfoto-cat" width = "300px" src="${url}" alt="${name}">
-    <div class="text-part">
-  <h2 class="name-cat">${name}</h2>
-  <p class="deskr-cat">${description}</p>
-  <p class="temperament-cat"><span class="temperament-label">Temperament:</span> ${temperament}</p>  </div>`;
+// Функція для обробки помилок
+function errorHandler(err) {
+  loader.classList.add('is-hidden');
+  error.classList.remove('is-hidden');
+  catInfo.classList.add('is-hidden');
 
-    catInfo.innerHTML = beerdCard;
-
+  // Виведення сповіщення про помилку за допомогою Notiflix
+  Notiflix.Notify.failure(`${error.textContent}`, {
+    position: 'center-center',
+  });
 }
