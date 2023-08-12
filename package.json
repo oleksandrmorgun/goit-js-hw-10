@@ -22,7 +22,8 @@
     "modern-normalize": "^1.1.0",
     "node-fetch": "^2.6.12",
     "notiflix": "^3.2.6",
-    "slim-select": "^2.6.0"
+    "slim-select": "^2.6.0",
+    "xapi-node": "^2.7.10"
   },
   "devDependencies": {
     "@parcel/transformer-sass": "^2.6.0",
