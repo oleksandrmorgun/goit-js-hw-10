@@ -6,7 +6,7 @@ import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
 
 
-axios.defaults.headers.common["x-api-key"] = "live_C8fch3W7tmmF8fmpsXU2mdIfjeqC3R8Q3wAY9gs2QZiQFnTO5tNKg722MPHavC8b";
+axios.defaults.headers.common["x-api-key"] = "live_gLtSFDyH7Qf7Q0u2oSHJOwVqIowxb3AAe0CTsMo1vMk4iOY28E1YnWOx6XUXNYDn";
 
 const selectCat = document.querySelector(".breed-select")
 const catInfo = document.querySelector(".cat-info")
